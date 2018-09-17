@@ -67,9 +67,11 @@ namespace csv = ::text::csv;
 // normalized shoulder width              = 
 // face height/body height                = K  4-S(3)
 // face height/shoulder width             = L  5-S(4)
+// x and y position in image frame normalized with image width and height respectively
+// 6-S(5) 7-S(7)
 
 
-typedef matrix<double,5,1> input_sample;// sample measurement size is 5 samples as shown above
+typedef matrix<double,7,1> input_sample;// sample measurement size is 5 samples as shown above
 typedef double posX;// output 1
 typedef double posY;// output 2
 typedef double posZ;// output 3
@@ -77,8 +79,16 @@ typedef double zoom;// we keep zoom constant and does not include as output
 typedef double pitch;// output 4
 typedef double yaw;// output 5
 
-int main()
+int main(int argc, char** argv)
 {
+
+if (argc == 1)
+    {
+        cout << "Give a template image file as arguments to this program." << endl;
+        return 0;
+    }
+    
+    
         posX x;posY y; posZ z; zoom ZOOM;pitch PITCH; yaw YAW; input_sample S;
         std::vector<double> posXVector;
         std::vector<double> posYVector;
@@ -90,17 +100,22 @@ int main()
         
         
         // get input data for training by reading the data from file
-         std::ifstream fs("/home/user/regression_selfi/build/output-10k.csv");
+         std::ifstream fs(argv[1]);//"/home/user/regression_selfi/build/output-1k.csv"
          csv::csv_istream csvs(fs);
          // get the labels first from the csv file
          std::string imageName,posXLabel,posYLabel,posZLabel,pitchLabel,yawLabel,zoomLabel;
          std::string sampleLabelH, sampleLabelI,sampleLabelJ, sampleLabelK, sampleLabelL;
-         // read from the file
+         std::string sampleLabelM, sampleLabelN;
+         
+         // read Labels from the file
          csvs>>imageName>>posXLabel>>posYLabel>>posZLabel>>zoomLabel>>pitchLabel>>yawLabel;
          csvs>>sampleLabelH>>sampleLabelI>>sampleLabelJ>>sampleLabelK>>sampleLabelL;
+         csvs>>sampleLabelM>>sampleLabelN;
          // debug print start
          std::cout<<imageName<<" : "<<posXLabel<<" : "<<posYLabel<<" : "<<posZLabel<<" : "<<zoomLabel<<" : "<<pitchLabel<<" : "<<yawLabel<<":::";
-         std::cout<<sampleLabelH<<" : "<<sampleLabelI<<" : "<<sampleLabelJ<<" : "<<sampleLabelK<<" : "<<sampleLabelL<<" : "<<std::endl;
+         std::cout<<sampleLabelH<<" : "<<sampleLabelI<<" : "<<sampleLabelJ<<" : ";
+         std::cout<<sampleLabelK<<" : "<<sampleLabelL<<" : ";
+         std::cout<<sampleLabelM<<" : "<<sampleLabelN<<std::endl;
          // debug print ends
 
          while (csvs) {
@@ -118,6 +133,10 @@ int main()
                 S(3,0) = temp;
                 csvs>>temp; //L
                 S(4,0) = temp;
+                csvs>>temp;//M
+                S(5,0) = temp;
+                csvs>>temp;//N
+                S(6,0) = temp;
                 // save into the vectors            
                 posXVector.push_back(x);posYVector.push_back(y);posZVector.push_back(z);
                 zoomVector.push_back(ZOOM);pitchVector.push_back(PITCH);yawVector.push_back(YAW);
@@ -131,7 +150,7 @@ int main()
         // radial basis kernel 
         typedef radial_basis_kernel<input_sample> kernel_type;
         krr_trainer<kernel_type> trainer;
-        const double gamma = 3.0/compute_mean_squared_distance(randomly_subsample(samples, 2000));// 2000 samples
+        const double gamma = 3.0/compute_mean_squared_distance(randomly_subsample(samples, 5000));// 4000 samples
         trainer.set_kernel(kernel_type(gamma));
         
         // train the regressors
@@ -143,14 +162,16 @@ int main()
         decision_function<kernel_type> test_yaw = trainer.train(samples, yawVector);
         
         //serialize("saved_function.dat") << test_posX<<test_posY<<test_pitch<<test_yaw;
-        serialize("saved_function.dat") << test_posZ<< test_posY << test_posX << test_pitch << test_yaw;
-        deserialize("saved_function.dat") >> test_posZ>> test_posY >> test_posX >> test_pitch >> test_yaw;
-        S(0,0) =-0.056846;
-        S(1,0)=0.289979;
-        S(2,0) =0.10625;	
-        S(3,0) =0.172708;	
-        S(4,0) =0.595588;
-//Image_2601.jpg	25.8	123.755	37.8	94	-18.6	82.1999
+        serialize("saved_function_4k.dat") << test_posZ<< test_posY << test_posX << test_pitch << test_yaw;
+        deserialize("saved_function_4k.dat") >> test_posZ>> test_posY >> test_posX >> test_pitch >> test_yaw;
+        S(0,0) =0.0368098;
+        S(1,0)=0.247344;
+        S(2,0) =0.127344;	
+        S(3,0) =0.157815;	
+        S(4,0) =0.638037;
+        S(5,0) = 0;
+        S(6,0) = 0;
+//Image_2242.jpg	1.49999	152.144	82.5001	94	-17.7	92.1	0.0368098	0.247344	0.127344	0.157815	0.638037
 
         std::cout<<test_posX(S)<<" : ";
         std::cout<<test_posY(S)<<" : ";
@@ -186,8 +207,10 @@ int main()
       cout << "R^2 LOO value yaw:          " << r_squared(yawVector,loo_values_yaw) << endl;
       
       
-      serialize("saved_function_10k.dat") << test_posZ<< test_posY << test_posX << test_pitch << test_yaw;
-        //deserialize("saved_function.dat") >> test_posZ>> test_posY >> test_posX >> test_pitch >> test_yaw;
+      serialize("saved_function_4k.dat") << test_posZ<< test_posY << test_posX << test_pitch << test_yaw;
+      deserialize("saved_function_4k.dat") >> test_posZ>> test_posY >> test_posX >> test_pitch >> test_yaw;
+        
+        return 0;
 }
 
 
