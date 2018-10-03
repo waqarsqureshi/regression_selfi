@@ -68,10 +68,10 @@ namespace csv = ::text::csv;
 // face height/body height                = K  4-S(3)
 // face height/shoulder width             = L  5-S(4)
 // x and y position in image frame normalized with image width and height respectively
-// 6-S(5) 7-S(7)
+// M 6-S(5) N 7-S(6)
 
 
-typedef matrix<double,7,1> input_sample;// sample measurement size is 5 samples as shown above
+typedef matrix<double,7,1> input_sample;// sample measurement size is 7 samples as shown above
 typedef double posX;// output 1
 typedef double posY;// output 2
 typedef double posZ;// output 3
@@ -164,13 +164,15 @@ if (argc == 1)
         //serialize("saved_function.dat") << test_posX<<test_posY<<test_pitch<<test_yaw;
         serialize("saved_function_4k.dat") << test_posZ<< test_posY << test_posX << test_pitch << test_yaw;
         deserialize("saved_function_4k.dat") >> test_posZ>> test_posY >> test_posX >> test_pitch >> test_yaw;
-        S(0,0) =0.0368098;
-        S(1,0)=0.247344;
-        S(2,0) =0.127344;	
-        S(3,0) =0.157815;	
-        S(4,0) =0.638037;
-        S(5,0) = 0;
-        S(6,0) = 0;
+        S(0,0) =-0.025974	;//						
+        S(1,0)= 0.207547;
+        S(2,0) = 0.0601562;	
+        S(3,0) =0.0997305;	
+        S(4,0) =0.480519;
+        S(5,0) =  0.103125;
+        S(6,0) = -0.219444;
+        //-0.025974	0.207547	0.0601562	0.0997305	0.480519	0.103125	-0.219444
+
 //Image_2242.jpg	1.49999	152.144	82.5001	94	-17.7	92.1	0.0368098	0.247344	0.127344	0.157815	0.638037
 
         std::cout<<test_posX(S)<<" : ";
@@ -208,9 +210,9 @@ if (argc == 1)
       
       
       serialize("saved_function_4k.dat") << test_posZ<< test_posY << test_posX << test_pitch << test_yaw;
-      deserialize("saved_function_4k.dat") >> test_posZ>> test_posY >> test_posX >> test_pitch >> test_yaw;
-        
-        return 0;
+      //deserialize("saved_function_4k.dat") >> test_posZ>> test_posY >> test_posX >> test_pitch >> test_yaw; 
+      
+      return 0;
 }
 
 
